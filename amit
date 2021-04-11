@@ -1,0 +1,43 @@
+from django.shortcuts import render,HttpResponseRedirect
+from .forms import UserEdit,AdminForm
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import authenticate,login
+
+
+def login(request):
+    if request.method=='POST':
+        fm=AuthenticationForm(request=request,data=request.POST)
+        if fm.is_valid():
+            usname=fm.cleaned_data['username']
+            passwd=fm.cleaned_data['password']
+            user=authenticate(username=usname,password=passwd)
+            if user is not None:
+                login(request)
+                return HttpResponseRedirect('/profile/')
+    else:
+        fm=AuthenticationForm()
+    return render(request,'login.html',{'form':fm})
+
+
+
+
+
+
+
+def profile(request):
+    if request.user.is_authenticated:
+        if request.method=='POST':
+            if request.user.is_superuser==True:
+                fm=AdminForm(request.POST,instance=request.user)
+            else:
+                fm=UserEdit(request.POST,instance=request.user)
+            if fm.is_valid():
+                fm.save()
+        else:
+            if request.user.is_superuser:
+                fm=AdminForm(instance=request.user)
+            else:
+                fm=UserEdit(instance=request.user)
+        return render(request,'form.html',{'form':fm})
+
+
